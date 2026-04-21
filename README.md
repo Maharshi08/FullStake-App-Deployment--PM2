@@ -40,18 +40,6 @@ A full-stack application with Python Flask backend and Angular frontend.
 
 ---
 
-## 📋 Important Differences
-
-| Feature | Dev (Port 5000) | Prod (Port 8010) |
-|---------|---|---|
-| Port | 5000 | 8010 |
-| Auto-reload | ✅ Yes | ❌ No |
-| Debug Mode | ✅ Yes | ❌ No |
-| Edit & Test | Instant | Manual restart needed |
-| When to use | Development | Deployment |
-
----
-
 ## 📁 Project Structure
 
 ```
