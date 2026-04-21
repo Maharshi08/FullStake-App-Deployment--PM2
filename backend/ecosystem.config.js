@@ -5,22 +5,16 @@ module.exports = {
 
       script: "gunicorn",
 
-      args: "-w 2 -b 0.0.0.0:8010 app:app",
+      args: "-w 2 -b 127.0.0.1:8010 app:app",
 
       interpreter: "./venv/bin/python",
 
-      env: {
-        FLASK_ENV: "development",
-        PORT: 8010
+      env_production: {
+        PORT: 8010,
+        FLASK_ENV: "production"
       },
 
-      watch: ["."],
-      ignore_watch: ["venv", "__pycache__", "*.log"],
-
-      env_production: {
-        FLASK_ENV: "production",
-        PORT: 8010
-      }
+      autorestart: true
     }
   ]
 };
