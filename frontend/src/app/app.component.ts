@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, Inject, PLATFORM_ID, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -10,27 +11,51 @@ import { CommonModule } from '@angular/common';
   template: `
     <h1>Full Stack App</h1>
     <p>{{ message }}</p>
+
     <input [(ngModel)]="inputMessage" placeholder="Enter message" />
     <button (click)="sendMessage()">Send</button>
+
     <p>Echo: {{ echo }}</p>
   `
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   message = '';
   inputMessage = '';
   echo = '';
 
-  constructor(private http: HttpClient) {
-    this.http.get<any>('/api/message')
-      .subscribe(res => {
-        this.message = res.message;
+  isBrowser: boolean;
+
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
+  // ✅ FIX: Only call API in browser context (not during SSR)
+  ngOnInit() {
+    if (this.isBrowser) {
+      this.loadMessage();
+    }
+  }
+
+  loadMessage() {
+    this.http.get<any>(`${environment.apiUrl}/message`)
+      .subscribe({
+        next: (res) => this.message = res.message,
+        error: (err) => console.error('API Error:', err)
       });
   }
 
   sendMessage() {
-    this.http.post<any>('/api/echo', { message: this.inputMessage })
-      .subscribe(res => {
-        this.echo = res.echo;
-      });
+    // Only allow in browser
+    if (!this.isBrowser) return;
+
+    this.http.post<any>(`${environment.apiUrl}/echo`, {
+      message: this.inputMessage
+    }).subscribe({
+      next: (res) => this.echo = res.echo,
+      error: (err) => console.error('Echo Error:', err)
+    });
   }
 }

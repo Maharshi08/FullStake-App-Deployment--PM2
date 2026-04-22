@@ -3,16 +3,13 @@ module.exports = {
     {
       name: "flask-backend",
 
-      script: "gunicorn",
+      script: "./venv/bin/gunicorn",  
 
       args: "-w 2 -b 127.0.0.1:8010 app:app",
 
-      interpreter: "./venv/bin/python",
+      cwd: "/home/alite-148/Task/fullstack-project/backend",
 
-      env_production: {
-        PORT: 8010,
-        FLASK_ENV: "production"
-      },
+      interpreter: "none",   
 
       autorestart: true
     }

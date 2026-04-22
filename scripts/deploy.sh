@@ -3,44 +3,53 @@ set -e
 
 echo "Starting Full Deployment..."
 
-BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BASE_DIR="/home/alite-148/Task/fullstack-project"
 
-FRONTEND_DIR="$BASE_DIR/frontend"
-BACKEND_DIR="$BASE_DIR/backend"
+cd $BASE_DIR
 
-# =========================
-# BACKEND (Flask)
-# =========================
-echo "Starting Flask backend..."
-cd "$BACKEND_DIR"
-
-# Use python directly instead of activate
-pm2 stop flask-backend 2>/dev/null || true
-pm2 delete flask-backend 2>/dev/null || true
-
-pm2 start app.py \
-  --name flask-backend \
-  --interpreter "$BACKEND_DIR/venv/bin/python3"
+echo "Pull latest code..."
+git pull origin master
 
 # =========================
-# FRONTEND (Angular)
+# BACKEND SETUP
 # =========================
-echo "Building Angular..."
-cd "$FRONTEND_DIR"
+echo "Backend setup..."
 
-rm -rf node_modules dist
-npm ci
-npm run build
+cd backend
 
-echo "Starting Angular..."
-pm2 stop angular-ssr 2>/dev/null || true
-pm2 delete angular-ssr 2>/dev/null || true
+# activate venv
+source venv/bin/activate
 
+# install deps (important)
+pip install -r requirements.txt || true
+
+# restart backend
+pm2 delete flask-backend || true
 pm2 start ecosystem.config.js
 
+cd ..
+
 # =========================
-# SAVE PM2 STATE
+# FRONTEND SETUP
+# =========================
+echo "Frontend setup..."
+
+cd frontend
+
+rm -rf node_modules dist || true
+
+npm install
+npm run build
+
+# restart frontend
+pm2 delete angular-ssr || true
+pm2 start ecosystem.config.js
+
+cd ..
+
+# =========================
+# SAVE PM2
 # =========================
 pm2 save
 
-echo "Deployment Complete!"
+echo "Deployment Completed!"
