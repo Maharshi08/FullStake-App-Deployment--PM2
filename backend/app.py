@@ -13,7 +13,7 @@ def home():
 
 @app.route("/api/message")
 def message():
-    return jsonify({"message": "Hello from Flask Backend!" })
+    return jsonify({"message": "Hello from Flask Backend!"})
 
 @app.route("/api/echo", methods=["POST"])
 def echo():
@@ -22,9 +22,8 @@ def echo():
 
 @app.route('/<path:path>')
 def static_proxy(path):
-    # send_static_file will guess the correct MIME type
     return app.send_static_file(path)
 
 if __name__ == "__main__":
-    port = os.environ.get('PORT', 5000)
-    app.run(debug=True, port=port)
+    port = int(os.environ.get('PORT', 8010))
+    app.run(host="0.0.0.0", port=port)
