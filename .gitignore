@@ -2,7 +2,7 @@
 .env
 .env.local
 .env.*.local
-environment.ts
+
 
 # Dependencies
 node_modules/
