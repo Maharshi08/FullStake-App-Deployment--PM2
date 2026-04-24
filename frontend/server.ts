@@ -4,6 +4,7 @@ import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
+import { IncomingMessage } from 'http';
 import bootstrap from './src/main.server';
 
 export function app(): express.Express {
@@ -26,11 +27,7 @@ export function app(): express.Express {
       changeOrigin: true,
       secure: false,
       pathRewrite: {
-        '^/api': '/api'  // ✅ FIX: Preserve /api path to Flask
-      },
-      onError: (err, req, res) => {
-        console.error('Proxy error:', err);
-        res.status(503).json({ error: 'Backend service unavailable' });
+        '^/api': '/api'  
       }
     })
   );
