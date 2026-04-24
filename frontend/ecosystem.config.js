@@ -2,9 +2,9 @@ module.exports = {
   apps: [
     {
       name: "angular-ssr",
-      script: "./dist/frontend/server/server.mjs",
-      // Use relative path - PM2 will run from this directory
-      cwd: __dirname,
+      script: "dist/frontend/server/server.mjs",
+      cwd: "/home/alite-148/Task/fullstack-project/frontend",
+      exec_mode: "fork",
       env: {
         PORT: 4000,
         NODE_ENV: "production",

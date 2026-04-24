@@ -1,93 +1,91 @@
-// Jenkins Pipeline with Nginx Reverse Proxy
-
 pipeline {
     agent any
-    
-    environment {
-        PROJECT_DIR = '/home/alite-148/Task/fullstack-project'
-    }
-    
+
     stages {
+
         stage('Git Checkout') {
             steps {
-                echo "Step 1: Getting the latest code from GitHub..."
+                echo "Step 1: Getting latest code..."
                 checkout scm
-                sh 'git config core.filemode false'
             }
         }
-        
+
         stage('Stop Previous PM2') {
             steps {
-                echo "Step 2: Stopping previous PM2 processes..."
-                sh 'pm2 kill || true'
+                sh 'pm2 delete all || true'
             }
         }
-        
+
         stage('Deploy Backend') {
             steps {
-                echo "Step 3: Deploying Flask Backend..."
-                dir("${PROJECT_DIR}/backend") {
+                dir("backend") {
                     sh '''
-                        source venv/bin/activate
-                        pip install -r requirements.txt --quiet
+                        python3 -m venv venv
+                        ./venv/bin/pip install -r requirements.txt
+
+                        pm2 delete flask-backend || true
                         pm2 start ecosystem.config.js
+
+                        pm2 save
+                        pm2 list
                     '''
                 }
             }
         }
-        
+
         stage('Deploy Frontend') {
             steps {
-                echo "Step 4: Deploying Angular SSR Frontend..."
-                dir("${PROJECT_DIR}/frontend") {
+                dir("frontend") {
                     sh '''
                         npm install
                         npm run build
+
+                        if [ ! -f dist/frontend/server/server.mjs ]; then
+                            echo "SSR build failed"
+                            exit 1
+                        fi
+
+                        pm2 delete angular-ssr || true
                         pm2 start ecosystem.config.js
+
+                        pm2 save
                     '''
                 }
             }
         }
-        
+
         stage('Configure Nginx') {
             steps {
-                echo "Step 5: Configuring Nginx reverse proxy..."
                 sh '''
-                    # Remove old symlink if exists
                     sudo rm -f /etc/nginx/sites-enabled/fullstack-project
-                    # Create new symlink
-                    sudo ln -s /home/alite-148/Task/fullstack-project/nginx.conf /etc/nginx/sites-enabled/fullstack-project
-                    # Test and reload nginx
+                    sudo ln -sf /home/alite-148/Task/fullstack-project/nginx.conf /etc/nginx/sites-enabled/fullstack-project
+
                     sudo nginx -t
                     sudo systemctl reload nginx
                 '''
             }
         }
-        
+
         stage('Health Checks') {
             steps {
-                echo "Step 6: Running health checks..."
                 sh '''
                     sleep 5
-                    echo "=== Backend API Test (via nginx) ==="
-                    curl -s http://localhost/api/message
-                    echo ""
-                    echo "=== Frontend Test (via nginx) ==="
-                    curl -s http://localhost/ | head -5
-                    echo ""
-                    echo "=== PM2 Status ==="
+
+                    curl -f http://localhost/api/message || exit 1
+                    curl -f http://localhost/ || exit 1
+
                     pm2 list
                 '''
             }
         }
     }
-    
+
     post {
         success {
-            echo "✅ SUCCESS! Deployment completed via nginx!"
+            echo "Deployment successful"
         }
         failure {
-            echo "❌ FAILED! Check the logs above"
+            echo "Deployment failed"
             sh 'pm2 logs --lines 50'
         }
     }

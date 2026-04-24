@@ -32,7 +32,6 @@ export class AppComponent implements OnInit {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
-  // ✅ FIX: Only call API in browser context (not during SSR)
   ngOnInit() {
     if (this.isBrowser) {
       this.loadMessage();
@@ -43,19 +42,24 @@ export class AppComponent implements OnInit {
     this.http.get<any>(`${environment.apiUrl}/message`)
       .subscribe({
         next: (res) => this.message = res.message,
-        error: (err) => console.error('API Error:', err)
+        error: (err) => {
+          console.error('API Error:', err);
+          this.message = 'Backend not reachable';
+        }
       });
   }
 
   sendMessage() {
-    // Only allow in browser
     if (!this.isBrowser) return;
 
     this.http.post<any>(`${environment.apiUrl}/echo`, {
       message: this.inputMessage
     }).subscribe({
       next: (res) => this.echo = res.echo,
-      error: (err) => console.error('Echo Error:', err)
+      error: (err) => {
+        console.error('Echo Error:', err);
+        this.echo = 'Error sending message';
+      }
     });
   }
 }
